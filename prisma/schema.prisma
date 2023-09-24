@@ -1,9 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider     = "postgresql"
+  url          = env("DATABASE_URL")
   relationMode = "prisma"
 }
 
@@ -11,11 +8,84 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Example {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+model User {
+  id        String    @id @default(uuid())
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Workout   Workout[]
 
-    @@index([name])
+  @@index([name])
+}
+
+enum MeasureType {
+  REPS
+  CALORIES
+  DISTANCE
+}
+
+model Equipment {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  movements Movement[]
+}
+
+model Movement {
+  id              Int               @id @default(autoincrement())
+  name            String
+  description     String
+  measureType     MeasureType
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  equipment       Equipment[]
+  WorkoutMovement WorkoutMovement[]
+
+  @@index([name])
+}
+
+enum WorkoutType {
+  AMRAP
+  EMOM
+  ROUNDS_FOR_TIME
+  ASCENDING_REP
+  DESCENDING_REP
+}
+
+model Workout {
+  id            Int               @id @default(autoincrement())
+  type          WorkoutType
+  name          String            @unique
+  rounds        Int?
+  lengthHours   Int?
+  lengthMinutes Int?
+  lengthSeconds Int?
+  repScheme     Int[]
+  createdBy     User?             @relation(fields: [createdById], references: [id])
+  createdById   String?
+  movements     WorkoutMovement[]
+
+  @@index([createdById])
+}
+
+model WorkoutMovement {
+  id           Int      @id @default(autoincrement())
+  movement     Movement @relation(fields: [movementId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  movementId   Int
+  reps         Int?
+  calories     Int?
+  distance     Int?
+  weight       Int?
+  maleWeight   Int?
+  femaleWeight Int?
+  timeHours    Int?
+  timeMinutes  Int?
+  timeSeconds  Int?
+
+  workout   Workout? @relation(fields: [workoutId], references: [id])
+  workoutId Int?
+
+  @@index([movementId])
+  @@index([workoutId])
 }
